@@ -1,0 +1,264 @@
+{
+  "descricao": "Exemplos de operações da API DimDim",
+  "base_url": "https://dimdim-api.azurewebsites.net/api",
+  "operacoes": {
+    "usuarios": {
+      "GET_todos_usuarios": {
+        "metodo": "GET",
+        "endpoint": "/usuarios",
+        "descricao": "Lista todos os usuários",
+        "resposta_exemplo": [
+          {
+            "id": 1,
+            "nome": "João Silva",
+            "email": "joao.silva@email.com",
+            "cpf": "12345678901",
+            "telefone": "(11) 99999-9999",
+            "endereco": "Rua das Flores, 123 - São Paulo/SP",
+            "saldo": 1000.00,
+            "ativo": true,
+            "dataCriacao": "2024-01-01T10:00:00",
+            "dataAtualizacao": "2024-01-01T10:00:00",
+            "transacoes": null
+          }
+        ]
+      },
+      "GET_usuario_por_id": {
+        "metodo": "GET",
+        "endpoint": "/usuarios/1",
+        "descricao": "Busca usuário por ID",
+        "resposta_exemplo": {
+          "id": 1,
+          "nome": "João Silva",
+          "email": "joao.silva@email.com",
+          "cpf": "12345678901",
+          "telefone": "(11) 99999-9999",
+          "endereco": "Rua das Flores, 123 - São Paulo/SP",
+          "saldo": 1000.00,
+          "ativo": true,
+          "dataCriacao": "2024-01-01T10:00:00",
+          "dataAtualizacao": "2024-01-01T10:00:00",
+          "transacoes": null
+        }
+      },
+      "GET_usuarios_ativos": {
+        "metodo": "GET",
+        "endpoint": "/usuarios/ativos",
+        "descricao": "Lista apenas usuários ativos"
+      },
+      "GET_buscar_por_nome": {
+        "metodo": "GET",
+        "endpoint": "/usuarios/buscar?nome=João",
+        "descricao": "Busca usuários por nome (case insensitive)"
+      },
+      "GET_usuario_por_email": {
+        "metodo": "GET",
+        "endpoint": "/usuarios/email/joao.silva@email.com",
+        "descricao": "Busca usuário por email"
+      },
+      "POST_criar_usuario": {
+        "metodo": "POST",
+        "endpoint": "/usuarios",
+        "descricao": "Cria novo usuário",
+        "body": {
+          "nome": "Maria Santos",
+          "email": "maria.santos@email.com",
+          "cpf": "98765432109",
+          "telefone": "(11) 88888-8888",
+          "endereco": "Av. Paulista, 456 - São Paulo/SP",
+          "saldo": 0.0,
+          "ativo": true
+        },
+        "resposta_sucesso": {
+          "id": 2,
+          "nome": "Maria Santos",
+          "email": "maria.santos@email.com",
+          "cpf": "98765432109",
+          "telefone": "(11) 88888-8888",
+          "endereco": "Av. Paulista, 456 - São Paulo/SP",
+          "saldo": 0.0,
+          "ativo": true,
+          "dataCriacao": "2024-01-01T11:00:00",
+          "dataAtualizacao": "2024-01-01T11:00:00",
+          "transacoes": null
+        },
+        "resposta_erro": {
+          "error": "Erro: Email já cadastrado no sistema."
+        }
+      },
+      "PUT_atualizar_usuario": {
+        "metodo": "PUT",
+        "endpoint": "/usuarios/2",
+        "descricao": "Atualiza usuário existente",
+        "body": {
+          "nome": "Maria Santos Silva",
+          "email": "maria.santos@email.com",
+          "cpf": "98765432109",
+          "telefone": "(11) 88888-8888",
+          "endereco": "Av. Paulista, 456 - São Paulo/SP",
+          "saldo": 500.00,
+          "ativo": true
+        }
+      },
+      "DELETE_desativar_usuario": {
+        "metodo": "DELETE",
+        "endpoint": "/usuarios/2",
+        "descricao": "Desativa usuário (soft delete)",
+        "resposta_sucesso": {
+          "message": "Usuário desativado com sucesso."
+        }
+      },
+      "DELETE_remover_permanentemente": {
+        "metodo": "DELETE",
+        "endpoint": "/usuarios/2/permanente",
+        "descricao": "Remove usuário permanentemente",
+        "resposta_sucesso": {
+          "message": "Usuário removido permanentemente."
+        }
+      }
+    },
+    "transacoes": {
+      "GET_todas_transacoes": {
+        "metodo": "GET",
+        "endpoint": "/transacoes",
+        "descricao": "Lista todas as transações",
+        "resposta_exemplo": [
+          {
+            "id": 1,
+            "valor": 500.00,
+            "tipo": "DEPOSITO",
+            "descricao": "Depósito inicial",
+            "usuarioId": 1,
+            "nomeUsuario": "João Silva",
+            "dataTransacao": "2024-01-01T10:30:00",
+            "dataCriacao": "2024-01-01T10:30:00",
+            "dataAtualizacao": "2024-01-01T10:30:00"
+          }
+        ]
+      },
+      "GET_transacao_por_id": {
+        "metodo": "GET",
+        "endpoint": "/transacoes/1",
+        "descricao": "Busca transação por ID"
+      },
+      "GET_transacoes_por_usuario": {
+        "metodo": "GET",
+        "endpoint": "/transacoes/usuario/1",
+        "descricao": "Lista transações de um usuário específico"
+      },
+      "GET_transacoes_paginadas": {
+        "metodo": "GET",
+        "endpoint": "/transacoes/usuario/1/paginado?page=0&size=10",
+        "descricao": "Lista transações de um usuário com paginação"
+      },
+      "GET_transacoes_por_tipo": {
+        "metodo": "GET",
+        "endpoint": "/transacoes/tipo/DEPOSITO",
+        "descricao": "Lista transações por tipo"
+      },
+      "GET_ultimas_transacoes": {
+        "metodo": "GET",
+        "endpoint": "/transacoes/usuario/1/ultimas/5",
+        "descricao": "Busca as últimas N transações de um usuário"
+      },
+      "POST_criar_deposito": {
+        "metodo": "POST",
+        "endpoint": "/transacoes",
+        "descricao": "Cria transação de depósito",
+        "body": {
+          "valor": 1000.00,
+          "tipo": "DEPOSITO",
+          "descricao": "Depósito inicial",
+          "usuarioId": 1
+        },
+        "resposta_sucesso": {
+          "id": 1,
+          "valor": 1000.00,
+          "tipo": "DEPOSITO",
+          "descricao": "Depósito inicial",
+          "usuarioId": 1,
+          "nomeUsuario": "João Silva",
+          "dataTransacao": "2024-01-01T10:30:00",
+          "dataCriacao": "2024-01-01T10:30:00",
+          "dataAtualizacao": "2024-01-01T10:30:00"
+        }
+      },
+      "POST_criar_saque": {
+        "metodo": "POST",
+        "endpoint": "/transacoes",
+        "descricao": "Cria transação de saque",
+        "body": {
+          "valor": 100.00,
+          "tipo": "SAQUE",
+          "descricao": "Saque para emergência",
+          "usuarioId": 1
+        },
+        "resposta_erro_saldo_insuficiente": {
+          "error": "Erro: Saldo insuficiente para realizar a operação."
+        }
+      },
+      "POST_criar_transferencia": {
+        "metodo": "POST",
+        "endpoint": "/transacoes",
+        "descricao": "Cria transação de transferência enviada",
+        "body": {
+          "valor": 250.00,
+          "tipo": "TRANSFERENCIA_ENVIADA",
+          "descricao": "Transferência para Maria",
+          "usuarioId": 1
+        }
+      },
+      "POST_criar_pagamento": {
+        "metodo": "POST",
+        "endpoint": "/transacoes",
+        "descricao": "Cria transação de pagamento",
+        "body": {
+          "valor": 75.50,
+          "tipo": "PAGAMENTO",
+          "descricao": "Pagamento de conta de luz",
+          "usuarioId": 3
+        }
+      },
+      "PUT_atualizar_transacao": {
+        "metodo": "PUT",
+        "endpoint": "/transacoes/1",
+        "descricao": "Atualiza transação existente",
+        "body": {
+          "valor": 750.00,
+          "tipo": "DEPOSITO",
+          "descricao": "Depósito corrigido",
+          "usuarioId": 1
+        }
+      },
+      "DELETE_remover_transacao": {
+        "metodo": "DELETE",
+        "endpoint": "/transacoes/1",
+        "descricao": "Remove transação",
+        "resposta_sucesso": {
+          "message": "Transação removida com sucesso."
+        }
+      }
+    }
+  },
+  "tipos_transacao": {
+    "DEPOSITO": "Adiciona valor ao saldo do usuário",
+    "SAQUE": "Remove valor do saldo do usuário",
+    "TRANSFERENCIA_ENVIADA": "Remove valor do saldo (transferência enviada)",
+    "TRANSFERENCIA_RECEBIDA": "Adiciona valor ao saldo (transferência recebida)",
+    "PAGAMENTO": "Remove valor do saldo (pagamento de conta/serviço)",
+    "RECEBIMENTO": "Adiciona valor ao saldo (recebimento de pagamento)"
+  },
+  "codigos_resposta": {
+    "200": "Sucesso - Operação realizada com sucesso",
+    "201": "Criado - Recurso criado com sucesso",
+    "400": "Erro de validação - Dados inválidos ou regra de negócio violada",
+    "404": "Não encontrado - Recurso não existe",
+    "500": "Erro interno do servidor"
+  },
+  "exemplos_curl": {
+    "criar_usuario": "curl -X POST https://dimdim-api.azurewebsites.net/api/usuarios -H \"Content-Type: application/json\" -d '{\"nome\":\"João Silva\",\"email\":\"joao@email.com\",\"cpf\":\"12345678901\"}'",
+    "criar_deposito": "curl -X POST https://dimdim-api.azurewebsites.net/api/transacoes -H \"Content-Type: application/json\" -d '{\"valor\":500.00,\"tipo\":\"DEPOSITO\",\"descricao\":\"Depósito inicial\",\"usuarioId\":1}'",
+    "listar_usuarios": "curl -X GET https://dimdim-api.azurewebsites.net/api/usuarios",
+    "listar_transacoes_usuario": "curl -X GET https://dimdim-api.azurewebsites.net/api/transacoes/usuario/1"
+  }
+}
