@@ -2,16 +2,29 @@
 
 ## 📋 Sobre o Projeto
 
-O **DimDim API** é um sistema de gestão financeira desenvolvido em Java com Spring Boot para a disciplina de Cloud Computing da FIAP. O sistema permite gerenciar usuários e suas transações financeiras, com persistência em Azure SQL Server e deploy na nuvem Azure.
+O **DimDim API** é um sistema de gestão financeira desenvolvido em Java com Spring Boot para a disciplina de **Cloud Computing - FIAP**. O sistema permite gerenciar usuários e suas transações financeiras, com persistência em Azure SQL Server e deploy na nuvem Azure.
+
+Este projeto foi desenvolvido como parte do **2º Checkpoint** da disciplina, atendendo aos requisitos de aplicação Web em nuvem com banco de dados PaaS.
 
 ## 🏗️ Arquitetura
 
 - **Backend**: Java 21 + Spring Boot 3.5.6
-- **Banco de Dados**: Azure SQL Server
-- **ORM**: JPA/Hibernate
+- **Banco de Dados**: Azure SQL Database (PaaS)
+- **ORM**: JPA/Hibernate 6.6.29
 - **Deploy**: Azure App Service
 - **Monitoramento**: Application Insights
 - **API**: REST com operações CRUD completas
+- **Build Tool**: Gradle
+- **Container**: Tomcat Embedded
+
+## 🎯 Objetivos do Projeto
+
+- ✅ Aplicação Web em Java deployada na Azure
+- ✅ Banco de dados PaaS (Azure SQL Database)
+- ✅ Relacionamento Master-Detail (usuarios ↔ transacoes)
+- ✅ Monitoramento com Application Insights
+- ✅ Deploy automatizado via GitHub Actions ou Azure CLI
+- ✅ API REST completa com operações CRUD
 
 ## 📊 Estrutura do Banco de Dados
 
@@ -92,7 +105,52 @@ A aplicação estará disponível em: `http://localhost:8080`
 
 ## 🌐 Deploy no Azure
 
-### Opção 1: Deploy via IDE (Eclipse/IntelliJ/VSCode)
+### 📋 Pré-requisitos
+
+- Conta Azure ativa
+- Azure CLI instalado e configurado
+- Java 21 instalado
+- Git configurado
+
+### 🚀 Opção 1: Deploy Automatizado via Azure CLI
+
+#### 1. Criar Recursos na Azure
+
+Execute o script para criar todos os recursos necessários:
+
+```bash
+# Clone o repositório
+git clone https://github.com/seu-usuario/API-Java.git
+cd API-Java
+
+# Execute o script de criação de recursos
+./scripts/create-azure-resources.sh
+```
+
+Este script criará:
+
+- ✅ Resource Group: `rg-dimdim-api`
+- ✅ App Service Plan: `asp-dimdim-api`
+- ✅ Web App: `dimdim-api-webapp`
+- ✅ SQL Server: `dimdim-sql-server`
+- ✅ SQL Database: `dimdim-database`
+- ✅ Application Insights: `appi-dimdim-api`
+
+#### 2. Configurar Variáveis de Ambiente
+
+```bash
+# Execute o script de configuração
+./scripts/configure-environment.sh
+```
+
+#### 3. Deploy da Aplicação
+
+```bash
+# Build e deploy
+./scripts/deploy-app.sh
+```
+
+### 🎯 Opção 2: Deploy via IDE (VSCode/IntelliJ/Eclipse)
 
 #### Pré-requisitos
 
@@ -102,82 +160,155 @@ A aplicação estará disponível em: `http://localhost:8080`
 
 #### Passos
 
-1. **Criar recursos no Azure**:
+1. **Instalar Plugin Azure**:
 
-   - App Service (Web App)
-   - SQL Database
-   - Application Insights
+   - VSCode: Azure App Service extension
+   - IntelliJ: Azure Toolkit for IntelliJ
+   - Eclipse: Azure Toolkit for Eclipse
 
-2. **Configurar variáveis de ambiente**:
+2. **Fazer Login na Azure**:
 
-   ```
-   DB_SERVER=seu-servidor.database.windows.net
-   DB_NAME=dimdim_db
-   DB_USERNAME=seu-usuario
-   DB_PASSWORD=sua-senha
-   APPINSIGHTS_INSTRUMENTATIONKEY=sua-chave
+   ```bash
+   az login
    ```
 
-3. **Deploy via plugin**:
+3. **Deploy via Plugin**:
    - Clique com botão direito no projeto
    - Selecione "Deploy to Azure"
    - Configure as opções de deploy
    - Execute o deploy
 
-### Opção 2: Deploy via GitHub Actions (Automático)
+### 🔄 Opção 3: Deploy via GitHub Actions (CI/CD)
 
 #### Configurar GitHub Actions
 
-1. Crie o arquivo `.github/workflows/deploy.yml`:
+1. **Crie o arquivo `.github/workflows/deploy.yml`**:
 
 ```yaml
-name: Deploy to Azure
+name: Deploy DimDim API to Azure
 
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  AZURE_WEBAPP_NAME: dimdim-api-webapp
+  AZURE_WEBAPP_PACKAGE_PATH: build/libs/*.jar
+  JAVA_VERSION: "21"
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v2
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v3
         with:
-          java-version: "21"
+          java-version: ${{ env.JAVA_VERSION }}
           distribution: "temurin"
 
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
       - name: Build with Gradle
-        run: ./gradlew build
+        run: ./gradlew build --no-daemon
+
+      - name: Run tests
+        run: ./gradlew test --no-daemon
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
-          app-name: "dimdim-api"
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: "build/libs/*.jar"
+          package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
 ```
 
-2. Configure os secrets no GitHub:
-   - `AZURE_WEBAPP_PUBLISH_PROFILE`
+2. **Configure os Secrets no GitHub**:
+   - Vá em Settings > Secrets and variables > Actions
+   - Adicione: `AZURE_WEBAPP_PUBLISH_PROFILE`
 
-### Opção 3: Deploy via Azure CLI
+### 🔧 Configuração Manual (Alternativa)
 
-#### Scripts CLI disponíveis em `scripts/`:
+Se preferir configurar manualmente:
 
-1. **Criar recursos**:
+#### 1. Criar Resource Group
 
 ```bash
-./scripts/create-resources.sh
+az group create --name rg-dimdim-api --location "Brazil South"
 ```
 
-2. **Deploy da aplicação**:
+#### 2. Criar App Service Plan
 
 ```bash
-./scripts/deploy-app.sh
+az appservice plan create \
+  --name asp-dimdim-api \
+  --resource-group rg-dimdim-api \
+  --sku B1 \
+  --is-linux
+```
+
+#### 3. Criar Web App
+
+```bash
+az webapp create \
+  --name dimdim-api-webapp \
+  --resource-group rg-dimdim-api \
+  --plan asp-dimdim-api \
+  --runtime "JAVA|21-java21"
+```
+
+#### 4. Criar SQL Server
+
+```bash
+az sql server create \
+  --name dimdim-sql-server \
+  --resource-group rg-dimdim-api \
+  --location "Brazil South" \
+  --admin-user dimdimadmin \
+  --admin-password "SuaSenhaSegura123!"
+```
+
+#### 5. Criar SQL Database
+
+```bash
+az sql db create \
+  --name dimdim-database \
+  --resource-group rg-dimdim-api \
+  --server dimdim-sql-server \
+  --service-objective S0
+```
+
+#### 6. Configurar Firewall do SQL
+
+```bash
+az sql server firewall-rule create \
+  --resource-group rg-dimdim-api \
+  --server dimdim-sql-server \
+  --name AllowAzureServices \
+  --start-ip-address 0.0.0.0 \
+  --end-ip-address 0.0.0.0
+```
+
+#### 7. Criar Application Insights
+
+```bash
+az monitor app-insights component create \
+  --app appi-dimdim-api \
+  --location "Brazil South" \
+  --resource-group rg-dimdim-api
 ```
 
 ## 📚 API Endpoints
@@ -430,17 +561,11 @@ API-Java/
 
 ## 👥 Integrantes do Grupo
 
-- **Nome**: [Nome do Integrante 1] - RM: [RM]
-- **Nome**: [Nome do Integrante 2] - RM: [RM]
-- **Nome**: [Nome do Integrante 3] - RM: [RM]
+- **Nome**: [Eduardo Miguel Forato Monteiro] - RM: [RM55871]
+- **Nome**: [Cicero Gabriel Oliveira Serafim] - RM: [RM556996]
+- **Nome**: [Murillo Sant'Anna - RM557183] - RM: [RM557183]
 - **Nome**: [Nome do Integrante 4] - RM: [RM]
-
-## 📞 Contato
-
-Para dúvidas ou suporte, entre em contato através do GitHub Issues ou email do grupo.
-
----
 
 **Disciplina**: Cloud Computing - FIAP  
 **Projeto**: DimDim API - Sistema de Gestão Financeira  
-**Semestre**: [Semestre/Ano]
+**Semestre**: [2S25

@@ -37,7 +37,7 @@ public class Usuario {
     @Column(name = "endereco", length = 255)
     private String endereco;
 
-    @Column(name = "saldo", precision = 10, scale = 2)
+    @Column(name = "saldo")
     private Double saldo = 0.0;
 
     @Column(name = "ativo")
