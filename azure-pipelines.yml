@@ -1,0 +1,133 @@
+# Pipeline de CI/CD para DimDim API
+# Checkpoint 3 - Cloud Computing FIAP
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+
+pool:
+  vmImage: "ubuntu-latest"
+
+variables:
+  javaVersion: "17"
+  mavenCacheFolder: "$(Build.SourcesDirectory)/.m2"
+
+stages:
+  # ===================================
+  # ESTÁGIO 1: BUILD E TESTES (CI)
+  # ===================================
+  - stage: BuildAndTest
+    displayName: "Build e Testes Automatizados"
+    jobs:
+      - job: BuildJob
+        displayName: "Compilar e Testar Aplicação"
+        steps:
+          # 1. Checkout do código
+          - checkout: self
+            fetchDepth: 0
+
+          # 2. Configurar JDK
+          - task: JavaToolInstaller@0
+            displayName: "Configurar JDK 17"
+            inputs:
+              versionSpec: "17"
+              jdkArchitectureOption: "x64"
+              jdkSourceOption: "PreInstalled"
+
+          # 3. Cache do Gradle para melhor performance
+          - task: Cache@2
+            displayName: "Cache do Gradle"
+            inputs:
+              key: "gradle | $(Agent.OS) | build.gradle"
+              path: "/home/vsts/.gradle"
+
+          # 4. Executar build com Gradle
+          - task: Gradle@3
+            displayName: "Executar Build com Gradle"
+            inputs:
+              tasks: "clean build"
+              publishJUnitResults: true
+              testResultsFiles: "**/TEST-*.xml"
+              gradleWrapperFile: "gradlew"
+
+          # 5. Executar testes unitários
+          - task: Gradle@3
+            displayName: "Executar Testes Unitários"
+            inputs:
+              tasks: "test"
+              gradleWrapperFile: "gradlew"
+
+          # 6. Publicar resultados dos testes
+          - task: PublishTestResults@2
+            displayName: "Publicar Resultados dos Testes"
+            inputs:
+              testResultsFormat: "JUnit"
+              testResultsFiles: "**/TEST-*.xml"
+              mergeTestResults: true
+              failTaskOnFailedTests: true
+
+          # 7. Publicar artefatos JAR
+          - task: CopyFiles@2
+            displayName: "Copiar Artefatos"
+            inputs:
+              SourceFolder: "$(Build.SourcesDirectory)"
+              Contents: |
+                **/build/libs/*.jar
+              TargetFolder: "$(Build.ArtifactStagingDirectory)"
+
+          - task: PublishBuildArtifacts@1
+            displayName: "Publicar Artefatos de Build"
+            inputs:
+              pathToPublish: "$(Build.ArtifactStagingDirectory)"
+              artifactName: "dimdim-api"
+
+          # 8. Logs de build
+          - task: PublishBuildArtifacts@1
+            displayName: "Publicar Logs de Build"
+            inputs:
+              pathToPublish: "$(Build.SourcesDirectory)"
+              artifactName: "logs"
+
+  # ===================================
+  # ESTÁGIO 2: DEPLOY (CD)
+  # ===================================
+  - stage: Deploy
+    displayName: "Deploy na Nuvem Azure"
+    dependsOn: BuildAndTest
+    condition: succeeded()
+    jobs:
+      - deployment: DeployToAzure
+        displayName: "Deploy para Azure App Service"
+        environment: "production"
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                # 1. Download dos artefatos
+                - task: DownloadBuildArtifacts@0
+                  displayName: "Download Artefatos"
+                  inputs:
+                    buildType: "current"
+
+                # 2. Deploy para Azure App Service
+                - task: AzureWebApp@1
+                  displayName: "Deploy para Azure App Service"
+                  inputs:
+                    azureSubscription: "Azure Service Connection" # Configurar no Azure DevOps
+                    appName: "dimdim-api-webapp"
+                    package: "$(Pipeline.Workspace)/dimdim-api/**/*.jar"
+                    runtimeStack: "JAVA|17"
+                    startUpCommand: "java -jar -Dserver.port=8080 *.jar"
+
+                # 3. Verificar deploy
+                - task: AzureCLI@2
+                  displayName: "Verificar Status do App Service"
+                  inputs:
+                    azureSubscription: "Azure Service Connection"
+                    scriptType: "bash"
+                    scriptLocation: "inlineScript"
+                    inlineScript: |
+                      echo "Verificando status do deployment..."
+                      az webapp show --name dimdim-api-webapp --resource-group rg-dimdim-api --query state

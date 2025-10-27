@@ -1,0 +1,36 @@
+# Docker Compose para DimDim API
+# Checkpoint 3 - Cloud Computing FIAP
+
+version: '3.8'
+
+services:
+  # Aplicação DimDim API
+  dimdim-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dimdim-api
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:sqlserver://dimdim-server-fiap.database.windows.net:1433;database=dimdim_db;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
+      - SPRING_DATASOURCE_USERNAME=dimdim_admin
+      - SPRING_DATASOURCE_PASSWORD=MySecure2024@Abc123#XyZ
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_SHOW_SQL=true
+      - AZURE_APPLICATION_INSIGHTS_INSTRUMENTATION_KEY=${APPINSIGHTS_INSTRUMENTATIONKEY}
+      - SERVER_PORT=8080
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - dimdim-network
+
+networks:
+  dimdim-network:
+    driver: bridge
+

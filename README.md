@@ -178,6 +178,208 @@ Este script criará:
    - Configure as opções de deploy
    - Execute o deploy
 
+## 🚀 CI/CD com Azure DevOps Pipeline
+
+### 📋 Configuração do Azure DevOps
+
+Este projeto inclui um pipeline completo de CI/CD configurado no Azure DevOps para automatizar build, testes e deploy.
+
+### 📝 Estrutura do Pipeline
+
+O arquivo `azure-pipelines.yml` contém dois estágios:
+
+1. **Build e Testes (CI)**
+
+   - Checkout do código
+   - Configuração do JDK 17
+   - Build com Gradle
+   - Execução de testes unitários (JUnit)
+   - Publicação de resultados de testes
+   - Publicação de artefatos JAR
+
+2. **Deploy (CD)**
+   - Download dos artefatos
+   - Deploy para Azure App Service
+   - Verificação do status do deploy
+
+### 🔧 Como Configurar no Azure DevOps
+
+#### 1. Criar Projeto no Azure DevOps
+
+1. Acesse [https://dev.azure.com](https://dev.azure.com)
+2. Crie um novo projeto (ex: "DimDim API Migration")
+3. Selecione "Agile" como metodologia de trabalho
+4. Configure o controle de versão como Git
+
+#### 2. Azure Boards - Criar Task
+
+1. Vá em **Boards** > **Work Items**
+2. Crie uma nova Task com título: **"Implementar DimDim API no Azure DevOps"**
+3. Atribua a task para você
+4. Mude o Status para **Active**
+5. Adicione o Work Item obrigatório ao Criar branch (configurado nas políticas)
+
+#### 3. Azure Repos - Importar Código
+
+**Opção A: Push do repositório local**
+
+```bash
+git remote add azure-devops <URL_DO_AZURE_REPOS>
+git push azure-devops main
+```
+
+**Opção B: Importar via interface**
+
+1. Vá em **Repos** > **Files**
+2. Clique em **Import Repository**
+3. Cole a URL do seu repositório Git
+4. Aguarde a importação
+
+#### 4. Configurar Branch Policies
+
+1. Vá em **Repos** > **Branches**
+2. No menu de 3 pontos ao lado da branch `main`, selecione **Branch Policies**
+3. Configure as seguintes políticas:
+   - ✅ **Build validation**: Pipeline de Build
+   - ✅ **Work item linking required**: Requer link de Work Item
+   - ✅ **Minimum number of reviewers**: 1 revisor
+   - ✅ **Automated reviewers**: Adicionar pf0841@fiap.com.br como revisor automático
+
+#### 5. Criar Branch para Tarefa
+
+1. Vá em **Boards** > abra a task criada
+2. Clique em **Create Branch** (cria automaticamente a branch baseada na task)
+3. Trabalhe na nova branch
+
+#### 6. Configurar Pipeline de Build
+
+1. Vá em **Pipelines** > **Pipelines**
+2. Clique em **New Pipeline**
+3. Selecione **Azure Repos Git**
+4. Selecione seu repositório
+5. Configure como **YAML**
+6. Escolha a branch `main`
+7. O arquivo `azure-pipelines.yml` será detectado automaticamente
+8. Clique em **Run** para executar manualmente
+
+**Configurar Service Connection para Azure:**
+
+1. Vá em **Project Settings** > **Service Connections**
+2. Clique em **New Service Connection**
+3. Selecione **Azure Resource Manager**
+4. Escolha **Workload Identity federation**
+5. Selecione a Subscription
+6. Dê um nome: **Azure Service Connection**
+7. Selecione o Resource Group: `rg-dimdim-api`
+8. Clique em **Save**
+
+#### 7. Executar Pipeline Manualmente
+
+1. Vá em **Pipelines** > **Pipelines**
+2. Selecione seu pipeline
+3. Clique em **Run Pipeline**
+4. Selecione a branch `main`
+5. Clique em **Run**
+6. Aguarde o build e verifique os testes unitários
+
+#### 8. Configurar Pipeline de Release
+
+1. Vá em **Pipelines** > **Releases**
+2. Clique em **New Pipeline**
+3. Adicione um **Artifact** > **Build**
+4. Selecione o pipeline de build criado anteriormente
+5. Na **Stage 1**, adicione tasks:
+   - **Azure App Service deploy**
+   - **Azure CLI** (para verificação)
+
+#### 9. Executar Release Manualmente
+
+1. Vá em **Releases**
+2. Clique em **Create Release**
+3. Selecione a versão do artifact
+4. Clique em **Create**
+5. Aguarde o deploy
+
+### 📊 Testes Unitários
+
+Os testes foram implementados com JUnit 5 e MockMvc:
+
+**Testes de Usuário (`UsuarioControllerTest`):**
+
+- ✅ Criar usuário com sucesso
+- ✅ Validar email duplicado
+- ✅ Listar todos os usuários
+- ✅ Buscar usuário por ID
+- ✅ Atualizar usuário
+- ✅ Desativar usuário
+
+**Testes de Transação (`TransacaoControllerTest`):**
+
+- ✅ Criar depósito
+- ✅ Criar saque com sucesso
+- ✅ Validar saldo insuficiente
+- ✅ Listar todas as transações
+- ✅ Buscar transações por usuário
+- ✅ Remover transação
+
+**Executar testes localmente:**
+
+```bash
+./gradlew test
+```
+
+### 🐳 Docker
+
+O projeto inclui suporte completo para Docker:
+
+**Build da imagem:**
+
+```bash
+docker build -t dimdim-api .
+```
+
+**Executar com Docker:**
+
+```bash
+docker run -p 8080:8080 dimdim-api
+```
+
+**Executar com Docker Compose:**
+
+```bash
+docker-compose up
+```
+
+### 📦 Arquivos de Entrega
+
+✅ **Pipeline YAML**: `azure-pipelines.yml`  
+✅ **Dockerfile**: `Dockerfile`  
+✅ **Docker Compose**: `docker-compose.yml`  
+✅ **Script SQL**: `database/script.sql`  
+✅ **API Examples**: `api-examples/operacoes-api.json`  
+✅ **Testes Unitários**: `src/test/java/`
+
+### 🎬 Execução Ponta a Ponta
+
+1. **Fazer alteração no código** na branch criada
+2. **Commit e Push**
+3. **Criar Pull Request** na interface do Azure DevOps
+4. **Vincular Work Item** ao PR
+5. **Aguardar aprovação** (auto-approve como revisor)
+6. **Fazer Merge** (não deletar branch)
+7. **Fechar Work Item** automaticamente
+8. **Pipeline executa automaticamente**
+9. **Release Pipeline executa automaticamente**
+10. **Verificar deployment** no Azure Portal
+
+### 🔍 Monitoramento
+
+Após o deploy, você pode monitorar:
+
+- **Application Insights**: Métricas e logs
+- **Azure App Service**: Status e logs
+- **Azure DevOps**: Histórico de builds e releases
+
 ### 🔄 Opção 3: Deploy via GitHub Actions (CI/CD)
 
 #### Configurar GitHub Actions
